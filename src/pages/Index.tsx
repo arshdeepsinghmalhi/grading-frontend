@@ -45,29 +45,6 @@ const Index = () => {
           </p>
         </div>
 
-        {/* Progress Steps */}
-        <div className="mb-8 p-6 rounded-lg border bg-card shadow-subtle">
-          <div className="flex items-center gap-4">
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
-              currentStep === "question" 
-                ? "bg-primary text-primary-foreground" 
-                : "bg-success text-success-foreground"
-            }`}>
-              <span className="text-sm font-medium">1</span>
-              <span className="text-sm">Question & Rubric</span>
-            </div>
-            <ArrowRight className="h-4 w-4 text-muted-foreground" />
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
-              currentStep === "upload" 
-                ? "bg-primary text-primary-foreground" 
-                : "bg-muted text-muted-foreground"
-            }`}>
-              <span className="text-sm font-medium">2</span>
-              <span className="text-sm">Upload & Grade</span>
-            </div>
-          </div>
-        </div>
-
         {/* Main Content */}
         {currentStep === "question" ? (
           <QuestionRubricForm onRubricGenerated={handleRubricGenerated} />
