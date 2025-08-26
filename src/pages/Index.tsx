@@ -3,7 +3,7 @@ import { QuestionRubricForm } from "@/components/grading/QuestionRubricForm";
 import { UploadGradeForm } from "@/components/grading/UploadGradeForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Brain, ArrowRight, RotateCcw, GraduationCap } from "lucide-react";
+import { Brain, ArrowRight, RotateCcw, GraduationCap, ArrowLeft } from "lucide-react";
 
 const Index = () => {
   const [currentStep, setCurrentStep] = useState<"question" | "upload">("question");
@@ -21,6 +21,10 @@ const Index = () => {
   const startOver = () => {
     setCurrentStep("question");
     setRubricText("");
+  };
+
+  const goBack = () => {
+    setCurrentStep("question");
   };
 
   return (
@@ -42,38 +46,27 @@ const Index = () => {
         </div>
 
         {/* Progress Steps */}
-        <Card className="mb-8 shadow-subtle">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
-                  currentStep === "question" 
-                    ? "bg-primary text-primary-foreground" 
-                    : "bg-success text-success-foreground"
-                }`}>
-                  <span className="text-sm font-medium">1</span>
-                  <span className="text-sm">Question & Rubric</span>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
-                  currentStep === "upload" 
-                    ? "bg-primary text-primary-foreground" 
-                    : "bg-muted text-muted-foreground"
-                }`}>
-                  <span className="text-sm font-medium">2</span>
-                  <span className="text-sm">Upload & Grade</span>
-                </div>
-              </div>
-              
-              {currentStep === "upload" && (
-                <Button onClick={startOver} variant="outline" size="sm">
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  Start Over
-                </Button>
-              )}
+        <div className="mb-8 p-6 rounded-lg border bg-card shadow-subtle">
+          <div className="flex items-center gap-4">
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
+              currentStep === "question" 
+                ? "bg-primary text-primary-foreground" 
+                : "bg-success text-success-foreground"
+            }`}>
+              <span className="text-sm font-medium">1</span>
+              <span className="text-sm">Question & Rubric</span>
             </div>
-          </CardContent>
-        </Card>
+            <ArrowRight className="h-4 w-4 text-muted-foreground" />
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
+              currentStep === "upload" 
+                ? "bg-primary text-primary-foreground" 
+                : "bg-muted text-muted-foreground"
+            }`}>
+              <span className="text-sm font-medium">2</span>
+              <span className="text-sm">Upload & Grade</span>
+            </div>
+          </div>
+        </div>
 
         {/* Main Content */}
         {currentStep === "question" ? (
@@ -85,7 +78,20 @@ const Index = () => {
           />
         )}
 
-        {/* Footer */}
+        {/* Navigation & Footer */}
+        {currentStep === "upload" && (
+          <div className="mt-8 flex justify-between items-center">
+            <Button onClick={goBack} variant="outline">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Questions
+            </Button>
+            <Button onClick={startOver} variant="outline">
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Start Over
+            </Button>
+          </div>
+        )}
+        
         <div className="mt-12 text-center">
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
             <GraduationCap className="h-4 w-4" />
