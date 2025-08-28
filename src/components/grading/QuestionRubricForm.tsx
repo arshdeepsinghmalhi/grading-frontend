@@ -7,6 +7,7 @@ import { Edit3, Lock, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { RubricDisplay } from "./RubricDisplay";
 import { apiFetch } from "@/lib/api";
+import { RubricEditor } from "./RubricEditor";
 
 interface QuestionRubricFormProps {
   onRubricGenerated: (rubricText: string) => void;
@@ -235,6 +236,7 @@ export function QuestionRubricForm({ onRubricGenerated }: QuestionRubricFormProp
                 onClick={toggleRubricLock}
                 variant="outline"
                 size="sm"
+                disabled={!isRubricLocked && Array.isArray(rubric?.criteria) && rubric.criteria.reduce((s: number, c: any) => s + (Number(c?.weight) || 0), 0) > 100}
               >
                 {isRubricLocked ? "Edit Rubric" : "Lock Rubric"}
               </Button>
@@ -246,17 +248,12 @@ export function QuestionRubricForm({ onRubricGenerated }: QuestionRubricFormProp
     rubric && <RubricDisplay rubric={rubric} />
   ) : (
     // Editable mode
-    <Textarea
-      value={JSON.stringify(rubric, null, 2)}
-      onChange={(e) => {
-        try {
-          setRubric(JSON.parse(e.target.value));
-        } catch {
-          // Ignore invalid JSON while typing
-        }
-      }}
-      className="min-h-[300px] resize-none font-mono text-sm"
-    />
+    <>
+      {Array.isArray(rubric?.criteria) && rubric.criteria.reduce((s: number, c: any) => s + (Number(c?.weight) || 0), 0) > 100 && (
+        <div className="mb-3 text-sm text-destructive">Total weight exceeds 100%. Please adjust before locking.</div>
+      )}
+      <RubricEditor rubric={rubric} onChange={setRubric} />
+    </>
   )}
 
   <div className="mt-4 flex justify-end">
