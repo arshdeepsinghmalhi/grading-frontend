@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Edit3, Lock, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { RubricDisplay } from "./RubricDisplay";
+import { apiFetch } from "@/lib/api";
 
 interface QuestionRubricFormProps {
   onRubricGenerated: (rubricText: string) => void;
@@ -51,21 +52,17 @@ export function QuestionRubricForm({ onRubricGenerated }: QuestionRubricFormProp
     setIsGenerating(true);
 
     try {
-      const response = await fetch("http://localhost:3001/api/generate/rubric", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          question: questionText,
-          ...(program ? { program } : {}),
-          ...(subject ? { subject } : {}),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch rubric from server");
-      }
-
-      const data = await response.json();
+      const data = await apiFetch<{ success: boolean; rubric?: unknown }>(
+        "/api/generate/rubric",
+        {
+          method: "POST",
+          jsonBody: {
+            question: questionText,
+            ...(program ? { program } : {}),
+            ...(subject ? { subject } : {}),
+          },
+        }
+      );
 
       if (data.success && data.rubric) {
         setRubric(data.rubric);

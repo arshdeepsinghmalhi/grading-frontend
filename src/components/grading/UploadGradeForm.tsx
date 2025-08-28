@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, FileText, Brain, Edit3, Lock, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { API_BASE_URL } from "@/lib/api";
 
 interface UploadGradeFormProps {
   rubricText: string;
@@ -59,7 +60,7 @@ const gradeAssignment = async () => {
     // Attach the uploaded file
     formData.append("file", selectedFile);
 
-    const response = await fetch("http://localhost:3001/api/grade", {
+    const response = await fetch(`${API_BASE_URL}/api/grade`, {
       method: "POST",
       body: formData,
     });
