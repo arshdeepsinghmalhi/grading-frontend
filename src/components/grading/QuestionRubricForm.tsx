@@ -225,42 +225,21 @@ export function QuestionRubricForm({ onRubricGenerated }: QuestionRubricFormProp
           <CardHeader className="bg-gradient-to-r from-background to-success/10">
             <CardTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2">
-                {isRubricLocked ? (
-                  <Lock className="h-5 w-5 text-muted-foreground" />
-                ) : (
-                  <Edit3 className="h-5 w-5 text-primary" />
-                )}
                 Generated Rubric
               </span>
-              <Button
-                onClick={toggleRubricLock}
-                variant="outline"
-                size="sm"
-                disabled={!isRubricLocked && Array.isArray(rubric?.criteria) && rubric.criteria.reduce((s: number, c: any) => s + (Number(c?.weight) || 0), 0) > 100}
-              >
-                {isRubricLocked ? "Edit Rubric" : "Lock Rubric"}
-              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-  {isRubricLocked ? (
-    // Read-only mode
-    rubric && <RubricDisplay rubric={rubric} />
-  ) : (
-    // Editable mode
-    <>
-      {Array.isArray(rubric?.criteria) && rubric.criteria.reduce((s: number, c: any) => s + (Number(c?.weight) || 0), 0) > 100 && (
-        <div className="mb-3 text-sm text-destructive">Total weight exceeds 100%. Please adjust before locking.</div>
-      )}
-      <RubricEditor rubric={rubric} onChange={setRubric} />
-    </>
+  {Array.isArray(rubric?.criteria) && rubric.criteria.reduce((s: number, c: any) => s + (Number(c?.weight) || 0), 0) > 100 && (
+    <div className="mb-3 text-sm text-destructive">Total weight exceeds 100%. Please adjust.</div>
   )}
+  <RubricEditor rubric={rubric} onChange={setRubric} />
 
   <div className="mt-4 flex justify-end">
     <Button 
       onClick={acceptRubric}
       variant="success"
-      disabled={!isRubricLocked}
+      disabled={!Array.isArray(rubric?.criteria) || rubric.criteria.length === 0 || rubric.criteria.reduce((s: number, c: any) => s + (Number(c?.weight) || 0), 0) > 100}
     >
       Accept Rubric
     </Button>
