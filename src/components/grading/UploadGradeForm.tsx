@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, FileText, Brain, Edit3, Lock, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { API_BASE_URL } from "@/lib/api";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface UploadGradeFormProps {
   rubricText: string;
@@ -22,6 +23,61 @@ export function UploadGradeForm({ rubricText, onGradeComplete }: UploadGradeForm
   const [hasResults, setHasResults] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
+
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } } });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+    } catch (err) {
+      toast({ title: "Camera Error", description: "Unable to access camera.", variant: "destructive" });
+      setIsCameraOpen(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
+
+  useEffect(() => {
+    if (isCameraOpen) {
+      startCamera();
+    } else {
+      stopCamera();
+    }
+    return () => stopCamera();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCameraOpen]);
+
+  const capturePhoto = async () => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
+    if (!blob) return;
+    const file = new File([blob], `captured-${Date.now()}.jpg`, { type: "image/jpeg" });
+    setSelectedFile(file);
+    setIsCameraOpen(false);
+    toast({ title: "Photo Captured", description: "The captured photo has been attached." });
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -149,7 +205,7 @@ const gradeAssignment = async () => {
                 type="file"
                 onChange={handleFileChange}
                 className="file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-muted file:text-muted-foreground hover:file:bg-muted/80"
-                accept=".pdf,.doc,.docx,.txt,.py,.js,.java,.cpp,.c"
+                accept=".pdf,.doc,.docx,.txt,.py,.js,.java,.cpp,.c,.png,.jpg,.jpeg"
                 disabled={isSubmitted}
               />
               {selectedFile && (
@@ -158,6 +214,28 @@ const gradeAssignment = async () => {
                   {selectedFile.name}
                 </div>
               )}
+            </div>
+            <div className="flex items-center gap-3">
+              <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
+                <DialogTrigger asChild>
+                  <Button type="button" variant="outline" disabled={isSubmitted}>Use Camera</Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[600px]">
+                  <DialogHeader>
+                    <DialogTitle>Capture Answer Photo</DialogTitle>
+                    <DialogDescription>Align the answer in the frame and capture a clear image.</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-3">
+                    <div className="aspect-video w-full bg-black rounded overflow-hidden">
+                      <video ref={videoRef} className="w-full h-full object-contain" playsInline muted />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button type="button" variant="outline" onClick={() => setIsCameraOpen(false)}>Cancel</Button>
+                      <Button type="button" onClick={capturePhoto}>Capture</Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
 
