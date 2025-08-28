@@ -29,73 +29,70 @@ export function UploadGradeForm({ rubricText, onGradeComplete }: UploadGradeForm
     }
   };
 
-  const gradeAssignment = async () => {
-    if (!selectedFile) {
-      toast({
-        title: "File Required",
-        description: "Please upload a student submission file.",
-        variant: "destructive",
-      });
-      return;
+const gradeAssignment = async () => {
+  if (!selectedFile) {
+    toast({
+      title: "File Required",
+      description: "Please upload a student submission file.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  if (!rubricText) {
+    toast({
+      title: "Rubric Required",
+      description: "Please generate and accept a rubric before grading.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  setIsGrading(true);
+
+  try {
+    const formData = new FormData();
+
+    // Send the rubric we generated earlier
+    formData.append("rubric", rubricText); // rubricText is already a JSON string
+
+    // Attach the uploaded file
+    formData.append("file", selectedFile);
+
+    const response = await fetch("http://localhost:3001/api/grade", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to grade assignment");
     }
 
-    setIsGrading(true);
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      const mockScore = Math.floor(Math.random() * 30) + 70; // 70-100
-      const mockFeedback = `Assessment Results for: ${selectedFile.name}
+    const {data} = await response.json();
+    console.log('data>>>>>>>>>',data)
+    // Adjust based on actual backend response shape
+    setScore(data.total_score?.toString() ?? "N/A");
+    setFeedback(data.feedback ?? "No feedback received.");
+    setHasResults(true);
+    setIsResultsLocked(true);
 
-OVERALL SCORE: ${mockScore}/100
+    toast({
+      title: "Grading Complete",
+      description: "AI has finished grading the submission.",
+    });
+  } catch (error) {
+    console.error(error);
+    toast({
+      title: "Grading Failed",
+      description: "Failed to grade assignment. Please try again.",
+      variant: "destructive",
+    });
+  } finally {
+    setIsGrading(false);
+  }
+};
 
-DETAILED FEEDBACK:
 
-✅ STRENGTHS:
-• Demonstrates solid understanding of core concepts
-• Shows good problem-solving approach
-• Clear presentation and organization
-• Technical implementation is generally sound
-
-⚠️ AREAS FOR IMPROVEMENT:
-• Could provide more detailed explanations for key steps
-• Some edge cases not fully addressed
-• Minor optimization opportunities exist
-• Documentation could be more comprehensive
-
-📝 SPECIFIC COMMENTS:
-• The initial approach shows excellent logical thinking
-• Implementation demonstrates good coding practices
-• Consider adding error handling for robustness
-• Overall work meets assignment requirements effectively
-
-💡 SUGGESTIONS FOR NEXT TIME:
-• Include more test cases to validate solution
-• Add comments explaining complex algorithmic steps
-• Consider alternative approaches for comparison
-• Proofread final submission for clarity
-
-This is a strong submission that meets the learning objectives. Great work!`;
-
-      setScore(mockScore.toString());
-      setFeedback(mockFeedback);
-      setHasResults(true);
-      setIsResultsLocked(true);
-      
-      toast({
-        title: "Grading Complete",
-        description: "AI has finished grading the submission.",
-      });
-    } catch (error) {
-      toast({
-        title: "Grading Failed",
-        description: "Failed to grade assignment. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGrading(false);
-    }
-  };
 
   const toggleResultsLock = () => {
     setIsResultsLocked(!isResultsLocked);
@@ -163,18 +160,7 @@ This is a strong submission that meets the learning objectives. Great work!`;
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">
-              Additional Grading Instructions (Optional)
-            </label>
-            <Textarea
-              placeholder="Any specific instructions for the AI grader..."
-              value={gradingInstructions}
-              onChange={(e) => setGradingInstructions(e.target.value)}
-              className="min-h-[80px] resize-none"
-              disabled={isSubmitted}
-            />
-          </div>
+
 
           <Button 
             onClick={gradeAssignment}

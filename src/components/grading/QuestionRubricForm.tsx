@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Edit3, Lock, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { RubricDisplay } from "./RubricDisplay";
 
 interface QuestionRubricFormProps {
   onRubricGenerated: (rubricText: string) => void;
@@ -14,21 +15,14 @@ export function QuestionRubricForm({ onRubricGenerated }: QuestionRubricFormProp
   const [questionText, setQuestionText] = useState("");
   const [program, setProgram] = useState("");
   const [subject, setSubject] = useState("");
-  const [rubricText, setRubricText] = useState("");
+  const [rubric, setRubric] = useState<any | null>(null);
   const [isRubricLocked, setIsRubricLocked] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
   const programs = [
-    "Computer Science",
-    "Engineering", 
-    "Mathematics",
-    "Physics",
-    "Chemistry",
-    "Biology",
-    "English",
-    "History",
-    "Philosophy"
+    "MBA",
+    "BBA","BCA","MCA"
   ];
 
   const subjects = [
@@ -55,54 +49,33 @@ export function QuestionRubricForm({ onRubricGenerated }: QuestionRubricFormProp
     }
 
     setIsGenerating(true);
-    
-    // Simulate API call
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const mockRubric = `Grading Rubric for: "${questionText.slice(0, 50)}..."
-
-SCORING CRITERIA (Total: 100 points)
-
-1. UNDERSTANDING & APPROACH (25 points)
-   - Excellent (23-25): Demonstrates complete understanding, optimal approach
-   - Good (18-22): Shows good understanding with minor gaps
-   - Satisfactory (13-17): Basic understanding, adequate approach
-   - Needs Improvement (0-12): Limited understanding, poor approach
-
-2. TECHNICAL ACCURACY (30 points)
-   - Excellent (27-30): All technical aspects correct and precise
-   - Good (21-26): Mostly correct with minor technical errors
-   - Satisfactory (15-20): Generally correct with some technical issues
-   - Needs Improvement (0-14): Significant technical errors
-
-3. PROBLEM SOLVING & LOGIC (25 points)
-   - Excellent (23-25): Clear logical flow, efficient problem-solving
-   - Good (18-22): Good logic with minor inefficiencies
-   - Satisfactory (13-17): Basic logic, workable solution
-   - Needs Improvement (0-12): Poor logic, unclear reasoning
-
-4. COMMUNICATION & PRESENTATION (20 points)
-   - Excellent (18-20): Clear, well-organized, professional presentation
-   - Good (14-17): Generally clear with minor presentation issues
-   - Satisfactory (10-13): Adequate communication, some clarity issues
-   - Needs Improvement (0-9): Poor communication, difficult to follow
-
-${program ? `Program Context: ${program}` : ''}
-${subject ? `Subject Focus: ${subject}` : ''}
-
-GRADING NOTES:
-- Consider partial credit for work shown
-- Evaluate creativity and innovation where applicable
-- Account for alternative valid approaches`;
-
-      setRubricText(mockRubric);
-      setIsRubricLocked(true);
-      
-      toast({
-        title: "Rubric Generated Successfully",
-        description: "Your AI-generated rubric is ready for review.",
+      const response = await fetch("http://localhost:3001/api/generate/rubric", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: questionText,
+          ...(program ? { program } : {}),
+          ...(subject ? { subject } : {}),
+        }),
       });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch rubric from server");
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.rubric) {
+        setRubric(data.rubric);
+        setIsRubricLocked(true);
+
+        toast({
+          title: "Rubric Generated Successfully",
+          description: "Your AI-generated rubric is ready for review.",
+        });
+      }
     } catch (error) {
       toast({
         title: "Generation Failed",
@@ -119,7 +92,7 @@ GRADING NOTES:
   };
 
   const acceptRubric = () => {
-    if (!rubricText.trim()) {
+    if (!rubric) {
       toast({
         title: "No Rubric to Accept",
         description: "Please generate a rubric first.",
@@ -129,8 +102,8 @@ GRADING NOTES:
     }
 
     setIsRubricLocked(true);
-    onRubricGenerated(rubricText);
-    
+    onRubricGenerated(JSON.stringify(rubric, null, 2)); // send structured rubric as JSON string
+
     toast({
       title: "Rubric Accepted",
       description: "Rubric has been saved and you can now proceed to grading.",
@@ -139,6 +112,7 @@ GRADING NOTES:
 
   return (
     <div className="space-y-6">
+      {/* Question + Options */}
       <Card className="shadow-subtle">
         <CardHeader className="bg-gradient-to-r from-background to-secondary/20">
           <CardTitle className="flex items-center gap-2">
@@ -219,7 +193,8 @@ GRADING NOTES:
         </CardContent>
       </Card>
 
-      {rubricText && (
+      {/* Generated Rubric */}
+      {rubric && (
         <Card className="shadow-subtle">
           <CardHeader className="bg-gradient-to-r from-background to-success/10">
             <CardTitle className="flex items-center justify-between">
@@ -241,22 +216,35 @@ GRADING NOTES:
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <Textarea
-              value={rubricText}
-              onChange={(e) => setRubricText(e.target.value)}
-              disabled={isRubricLocked}
-              className="min-h-[300px] resize-none font-mono text-sm"
-            />
-            <div className="mt-4 flex justify-end">
-              <Button 
-                onClick={acceptRubric}
-                variant="success"
-                disabled={!isRubricLocked}
-              >
-                Accept Rubric
-              </Button>
-            </div>
-          </CardContent>
+  {isRubricLocked ? (
+    // Read-only mode
+    rubric && <RubricDisplay rubric={rubric} />
+  ) : (
+    // Editable mode
+    <Textarea
+      value={JSON.stringify(rubric, null, 2)}
+      onChange={(e) => {
+        try {
+          setRubric(JSON.parse(e.target.value));
+        } catch {
+          // Ignore invalid JSON while typing
+        }
+      }}
+      className="min-h-[300px] resize-none font-mono text-sm"
+    />
+  )}
+
+  <div className="mt-4 flex justify-end">
+    <Button 
+      onClick={acceptRubric}
+      variant="success"
+      disabled={!isRubricLocked}
+    >
+      Accept Rubric
+    </Button>
+  </div>
+</CardContent>
+
         </Card>
       )}
     </div>
