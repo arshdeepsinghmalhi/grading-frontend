@@ -39,6 +39,15 @@ export function QuestionRubricForm({ onRubricGenerated }: QuestionRubricFormProp
     "Linear Algebra"
   ];
 
+  const [year, setYear] = useState("");
+  const years = [
+    "2021",
+    "2022",
+    "2023",
+    "2024",
+    "2025"
+  ];
+
   const generateRubric = async () => {
     if (!questionText.trim()) {
       toast({
@@ -60,6 +69,7 @@ export function QuestionRubricForm({ onRubricGenerated }: QuestionRubricFormProp
             question: questionText,
             ...(program ? { program } : {}),
             ...(subject ? { subject } : {}),
+            ...(year ? { year } : {}),
           },
         }
       );
@@ -161,6 +171,24 @@ export function QuestionRubricForm({ onRubricGenerated }: QuestionRubricFormProp
                   {subjects.map((subj) => (
                     <SelectItem key={subj} value={subj}>
                       {subj}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-sm font-medium text-foreground">
+                Year (Optional)
+              </label>
+              <Select value={year} onValueChange={setYear}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {years.map((y) => (
+                    <SelectItem key={y} value={y}>
+                      {y}
                     </SelectItem>
                   ))}
                 </SelectContent>
