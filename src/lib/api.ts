@@ -5,12 +5,17 @@ export const API_BASE_URL: string =
 export type ApiFetchOptions = RequestInit & {
   // If true, will set Content-Type: application/json when body is an object
   jsonBody?: unknown;
+  // If true, will include authentication headers
+  requireAuth?: boolean;
 };
 
 export async function apiFetch<T = any>(path: string, options: ApiFetchOptions = {}): Promise<T> {
-  const { jsonBody, headers, ...rest } = options;
+  const { jsonBody, headers, requireAuth = false, credentials = 'include', ...rest } = options;
 
-  const init: RequestInit = { ...rest };
+  const init: RequestInit = { 
+    ...rest,
+    credentials: credentials as RequestCredentials
+  };
   const finalHeaders = new Headers(headers || {});
 
   if (jsonBody !== undefined) {
@@ -28,10 +33,18 @@ export async function apiFetch<T = any>(path: string, options: ApiFetchOptions =
 
   const url = `${API_BASE_URL}${path}`;
   const response = await fetch(url, init);
+  
+  // Handle 401 errors by redirecting to auth
+  if (response.status === 401) {
+    window.location.href = '/auth'
+    throw new Error('Authentication required')
+  }
+  
   if (!response.ok) {
     const text = await response.text().catch(() => "");
     throw new Error(`Request failed ${response.status}: ${text || response.statusText}`);
   }
+  
   // Try to parse JSON; if it fails, return as any
   try {
     return (await response.json()) as T;

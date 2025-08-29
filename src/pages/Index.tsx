@@ -4,6 +4,7 @@ import { UploadGradeForm } from "@/components/grading/UploadGradeForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Brain, ArrowRight, RotateCcw, GraduationCap, ArrowLeft } from "lucide-react";
+import { UserProfile } from "@/components/auth/UserProfile";
 
 const Index = () => {
   const [currentStep, setCurrentStep] = useState<"question" | "upload">("question");
@@ -31,18 +32,24 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="p-3 rounded-full bg-gradient-to-r from-primary to-accent text-white">
-              <Brain className="h-8 w-8" />
+        <div className="flex justify-between items-start mb-8">
+          <div className="flex-1" />
+          <div className="text-center flex-1">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="p-3 rounded-full bg-gradient-to-r from-primary to-accent text-white">
+                <Brain className="h-8 w-8" />
+              </div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                AI Grading Assistant
+              </h1>
             </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              AI Grading Assistant
-            </h1>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Streamline your grading process with AI-powered rubric generation and intelligent assessment feedback
+            </p>
           </div>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Streamline your grading process with AI-powered rubric generation and intelligent assessment feedback
-          </p>
+          <div className="flex-1 flex justify-end">
+            <UserProfile />
+          </div>
         </div>
 
         {/* Main Content */}
