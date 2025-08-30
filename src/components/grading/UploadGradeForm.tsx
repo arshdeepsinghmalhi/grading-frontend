@@ -3,19 +3,41 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, FileText, Brain, Edit3, Lock, CheckCircle } from "lucide-react";
+import {
+  Upload,
+  FileText,
+  Brain,
+  Edit3,
+  Lock,
+  CheckCircle,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { API_BASE_URL } from "@/lib/api";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface UploadGradeFormProps {
   rubricText: string;
   onGradeComplete: () => void;
+  questionId: string;
+  questionText: string;
 }
 
-export function UploadGradeForm({ rubricText, onGradeComplete }: UploadGradeFormProps) {
+export function UploadGradeForm({
+  rubricText,
+  onGradeComplete,
+  questionId,
+  questionText,
+}: UploadGradeFormProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [gradingInstructions, setGradingInstructions] = useState("");
+  const [gradeId, setGradeId] = useState("");
   const [score, setScore] = useState("");
   const [feedback, setFeedback] = useState("");
   const [isGrading, setIsGrading] = useState(false);
@@ -30,14 +52,20 @@ export function UploadGradeForm({ rubricText, onGradeComplete }: UploadGradeForm
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } } });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: "environment" } },
+      });
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
       }
     } catch (err) {
-      toast({ title: "Camera Error", description: "Unable to access camera.", variant: "destructive" });
+      toast({
+        title: "Camera Error",
+        description: "Unable to access camera.",
+        variant: "destructive",
+      });
       setIsCameraOpen(false);
     }
   };
@@ -71,12 +99,19 @@ export function UploadGradeForm({ rubricText, onGradeComplete }: UploadGradeForm
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
+    const blob: Blob | null = await new Promise((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", 0.9)
+    );
     if (!blob) return;
-    const file = new File([blob], `captured-${Date.now()}.jpg`, { type: "image/jpeg" });
+    const file = new File([blob], `captured-${Date.now()}.jpg`, {
+      type: "image/jpeg",
+    });
     setSelectedFile(file);
     setIsCameraOpen(false);
-    toast({ title: "Photo Captured", description: "The captured photo has been attached." });
+    toast({
+      title: "Photo Captured",
+      description: "The captured photo has been attached.",
+    });
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,76 +121,73 @@ export function UploadGradeForm({ rubricText, onGradeComplete }: UploadGradeForm
     }
   };
 
-const gradeAssignment = async () => {
-  if (!selectedFile) {
-    toast({
-      title: "File Required",
-      description: "Please upload a student submission file.",
-      variant: "destructive",
-    });
-    return;
-  }
-
-  if (!rubricText) {
-    toast({
-      title: "Rubric Required",
-      description: "Please generate and accept a rubric before grading.",
-      variant: "destructive",
-    });
-    return;
-  }
-
-  setIsGrading(true);
-
-  try {
-    const formData = new FormData();
-
-    // Send the rubric we generated earlier
-    formData.append("rubric", rubricText); // rubricText is already a JSON string
-
-    // Attach the uploaded file
-    formData.append("file", selectedFile);
-
-    const response = await fetch(`${API_BASE_URL}/api/grade`, {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to grade assignment");
+  const gradeAssignment = async () => {
+    if (!selectedFile) {
+      toast({
+        title: "File Required",
+        description: "Please upload a student submission file.",
+        variant: "destructive",
+      });
+      return;
     }
 
-    const {data} = await response.json();
-    console.log('data>>>>>>>>>',data)
-    // Adjust based on actual backend response shape
-    setScore(data.total_score?.toString() ?? "N/A");
-    setFeedback(data.feedback ?? "No feedback received.");
-    setHasResults(true);
-    setIsResultsLocked(true);
+    if (!rubricText) {
+      toast({
+        title: "Rubric Required",
+        description: "Please generate and accept a rubric before grading.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    toast({
-      title: "Grading Complete",
-      description: "AI has finished grading the submission.",
-    });
-  } catch (error) {
-    console.error(error);
-    toast({
-      title: "Grading Failed",
-      description: "Failed to grade assignment. Please try again.",
-      variant: "destructive",
-    });
-  } finally {
-    setIsGrading(false);
-  }
-};
+    setIsGrading(true);
 
+    try {
+      const formData = new FormData();
 
+      formData.append("rubric", rubricText);
+      formData.append("file", selectedFile);
+      formData.append("questionId", questionId);
+      formData.append("questionText", questionText);
+      const response = await fetch(`${API_BASE_URL}/api/grade`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to grade assignment");
+      }
+
+      const { data } = await response.json();
+
+      // Adjust based on actual backend response shape
+      setGradeId(data.gradeId);
+      setScore(data.total_score?.toString() ?? "N/A");
+      setFeedback(data.feedback ?? "No feedback received.");
+      setHasResults(true);
+      setIsResultsLocked(true);
+
+      toast({
+        title: "Grading Complete",
+        description: "AI has finished grading the submission.",
+      });
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Grading Failed",
+        description: "Failed to grade assignment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGrading(false);
+    }
+  };
 
   const toggleResultsLock = () => {
     setIsResultsLocked(!isResultsLocked);
   };
 
-  const submitFinalGrade = () => {
+  const submitFinalGrade = async () => {
     if (!hasResults) {
       toast({
         title: "No Results to Submit",
@@ -164,15 +196,28 @@ const gradeAssignment = async () => {
       });
       return;
     }
-
+    try {
+      await fetch(`${API_BASE_URL}/api/update/feedback-data`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gradeId: gradeId,
+          updatedScore: score,
+          updatedFeedback: feedback,
+        }),
+      });
+    } catch (error) {
+      console.error(error);
+    }
+    setGradeId("");
     setIsSubmitted(true);
     setIsResultsLocked(true);
-    
+
     toast({
       title: "Grade Submitted Successfully",
       description: "The final grade has been recorded.",
     });
-    
+
     onGradeComplete();
   };
 
@@ -184,6 +229,7 @@ const gradeAssignment = async () => {
     setHasResults(false);
     setIsSubmitted(false);
     setIsResultsLocked(true);
+    setGradeId("");
   };
 
   return (
@@ -218,20 +264,41 @@ const gradeAssignment = async () => {
             <div className="flex items-center gap-3">
               <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
                 <DialogTrigger asChild>
-                  <Button type="button" variant="outline" disabled={isSubmitted}>Use Camera</Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isSubmitted}
+                  >
+                    Use Camera
+                  </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[600px]">
                   <DialogHeader>
                     <DialogTitle>Capture Answer Photo</DialogTitle>
-                    <DialogDescription>Align the answer in the frame and capture a clear image.</DialogDescription>
+                    <DialogDescription>
+                      Align the answer in the frame and capture a clear image.
+                    </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-3">
                     <div className="aspect-video w-full bg-black rounded overflow-hidden">
-                      <video ref={videoRef} className="w-full h-full object-contain" playsInline muted />
+                      <video
+                        ref={videoRef}
+                        className="w-full h-full object-contain"
+                        playsInline
+                        muted
+                      />
                     </div>
                     <div className="flex justify-end gap-2">
-                      <Button type="button" variant="outline" onClick={() => setIsCameraOpen(false)}>Cancel</Button>
-                      <Button type="button" onClick={capturePhoto}>Capture</Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsCameraOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button type="button" onClick={capturePhoto}>
+                        Capture
+                      </Button>
                     </div>
                   </div>
                 </DialogContent>
@@ -239,9 +306,7 @@ const gradeAssignment = async () => {
             </div>
           </div>
 
-
-
-          <Button 
+          <Button
             onClick={gradeAssignment}
             disabled={isGrading || isSubmitted}
             variant="elegant"
@@ -276,11 +341,7 @@ const gradeAssignment = async () => {
                 Grading Results
               </span>
               {!isSubmitted && (
-                <Button
-                  onClick={toggleResultsLock}
-                  variant="outline"
-                  size="sm"
-                >
+                <Button onClick={toggleResultsLock} variant="outline" size="sm">
                   {isResultsLocked ? "Edit Results" : "Lock Results"}
                 </Button>
               )}
@@ -314,7 +375,7 @@ const gradeAssignment = async () => {
 
             {!isSubmitted && (
               <div className="flex justify-end pt-4 border-t">
-                <Button 
+                <Button
                   onClick={submitFinalGrade}
                   variant="success"
                   size="lg"
@@ -330,12 +391,11 @@ const gradeAssignment = async () => {
               <div className="flex justify-between items-center pt-4 border-t">
                 <div className="flex items-center gap-2 text-success">
                   <CheckCircle className="h-5 w-5" />
-                  <span className="font-medium">Grade Successfully Submitted</span>
+                  <span className="font-medium">
+                    Grade Successfully Submitted
+                  </span>
                 </div>
-                <Button 
-                  onClick={resetForNewSubmission}
-                  variant="outline"
-                >
+                <Button onClick={resetForNewSubmission} variant="outline">
                   Grade Another Submission
                 </Button>
               </div>

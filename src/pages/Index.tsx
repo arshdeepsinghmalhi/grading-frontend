@@ -2,13 +2,20 @@ import { useState } from "react";
 import { QuestionRubricForm } from "@/components/grading/QuestionRubricForm";
 import { UploadGradeForm } from "@/components/grading/UploadGradeForm";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Brain, ArrowRight, RotateCcw, GraduationCap, ArrowLeft } from "lucide-react";
 import { UserProfile } from "@/components/auth/UserProfile";
 
 const Index = () => {
   const [currentStep, setCurrentStep] = useState<"question" | "upload">("question");
   const [rubricText, setRubricText] = useState("");
+
+  // 🔼 Lifted state for the QuestionRubricForm
+  const [questionText, setQuestionText] = useState("");
+  const [program, setProgram] = useState("");
+  const [subject, setSubject] = useState("");
+  const [year, setYear] = useState("");
+  const [rubric, setRubric] = useState<any | null>(null);
+  const [questionId, setQuestionId] = useState<any | null>(null);
 
   const handleRubricGenerated = (rubric: string) => {
     setRubricText(rubric);
@@ -22,6 +29,12 @@ const Index = () => {
   const startOver = () => {
     setCurrentStep("question");
     setRubricText("");
+    setQuestionText("");
+    setProgram("");
+    setSubject("");
+    setYear("");
+    setRubric(null);
+    setQuestionId(null);
   };
 
   const goBack = () => {
@@ -54,11 +67,27 @@ const Index = () => {
 
         {/* Main Content */}
         {currentStep === "question" ? (
-          <QuestionRubricForm onRubricGenerated={handleRubricGenerated} />
+          <QuestionRubricForm
+            onRubricGenerated={handleRubricGenerated}
+            questionText={questionText}
+            setQuestionText={setQuestionText}
+            program={program}
+            setProgram={setProgram}
+            subject={subject}
+            setSubject={setSubject}
+            year={year}
+            setYear={setYear}
+            rubric={rubric}
+            setRubric={setRubric}
+            questionId={questionId}
+            setQuestionId={setQuestionId}
+          />
         ) : (
-          <UploadGradeForm 
-            rubricText={rubricText} 
-            onGradeComplete={handleGradeComplete} 
+          <UploadGradeForm
+            rubricText={rubricText}
+            onGradeComplete={handleGradeComplete}
+            questionId = {questionId}
+            questionText={questionText}
           />
         )}
 
@@ -75,7 +104,7 @@ const Index = () => {
             </Button>
           </div>
         )}
-        
+
         <div className="mt-12 text-center">
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
             <GraduationCap className="h-4 w-4" />

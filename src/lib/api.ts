@@ -1,4 +1,4 @@
-export const API_BASE_URL: string =
+export const API_BASE_URL: string = 
   (import.meta as any).env?.VITE_API_BASE_URL ||
   ((import.meta as any).env?.PROD ? "https://grading-backend-1.onrender.com" : "http://localhost:3001");
 

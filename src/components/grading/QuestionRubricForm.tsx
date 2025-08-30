@@ -1,31 +1,49 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Edit3, Lock, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { RubricDisplay } from "./RubricDisplay";
 import { apiFetch } from "@/lib/api";
 import { RubricEditor } from "./RubricEditor";
+import { useState } from "react";
 
 interface QuestionRubricFormProps {
   onRubricGenerated: (rubricText: string) => void;
+  questionText: string;
+  setQuestionText: (val: string) => void;
+  program: string;
+  setProgram: (val: string) => void;
+  subject: string;
+  setSubject: (val: string) => void;
+  year: string;
+  setYear: (val: string) => void;
+  rubric: any | null;
+  setRubric: (val: any) => void;
+  questionId: any | null;
+  setQuestionId: (val: any) => void;
 }
 
-export function QuestionRubricForm({ onRubricGenerated }: QuestionRubricFormProps) {
-  const [questionText, setQuestionText] = useState("");
-  const [program, setProgram] = useState("");
-  const [subject, setSubject] = useState("");
-  const [rubric, setRubric] = useState<any | null>(null);
+export function QuestionRubricForm({
+  onRubricGenerated,
+  questionText,
+  setQuestionText,
+  program,
+  setProgram,
+  subject,
+  setSubject,
+  year,
+  setYear,
+  rubric,
+  setRubric,
+  questionId,
+  setQuestionId,
+}: QuestionRubricFormProps) {
   const [isRubricLocked, setIsRubricLocked] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
-  const programs = [
-    "MBA",
-    "BBA","BCA","MCA"
-  ];
+  const programs = ["MBA", "BBA", "BCA", "MCA"];
 
   const subjects = [
     "Data Structures",
@@ -37,17 +55,10 @@ export function QuestionRubricForm({ onRubricGenerated }: QuestionRubricFormProp
     "Operating Systems",
     "Computer Networks",
     "Calculus",
-    "Linear Algebra"
+    "Linear Algebra",
   ];
 
-  const [year, setYear] = useState("");
-  const years = [
-    "2021",
-    "2022",
-    "2023",
-    "2024",
-    "2025"
-  ];
+  const years = ["1st year", "2nd year", "3rd year", "4th year"];
 
   const generateRubric = async () => {
     if (!questionText.trim()) {
@@ -62,7 +73,7 @@ export function QuestionRubricForm({ onRubricGenerated }: QuestionRubricFormProp
     setIsGenerating(true);
 
     try {
-      const data = await apiFetch<{ success: boolean; rubric?: unknown }>(
+      const data = await apiFetch<{ success: boolean; rubric?: unknown; questionId?: number }>(
         "/api/generate/rubric",
         {
           method: "POST",
@@ -77,6 +88,7 @@ export function QuestionRubricForm({ onRubricGenerated }: QuestionRubricFormProp
 
       if (data.success && data.rubric) {
         setRubric(data.rubric);
+        setQuestionId(data.questionId);
         setIsRubricLocked(true);
 
         toast({
@@ -95,11 +107,7 @@ export function QuestionRubricForm({ onRubricGenerated }: QuestionRubricFormProp
     }
   };
 
-  const toggleRubricLock = () => {
-    setIsRubricLocked(!isRubricLocked);
-  };
-
-  const acceptRubric = () => {
+  const acceptRubric = async () => {
     if (!rubric) {
       toast({
         title: "No Rubric to Accept",
@@ -110,6 +118,15 @@ export function QuestionRubricForm({ onRubricGenerated }: QuestionRubricFormProp
     }
 
     setIsRubricLocked(true);
+
+    await apiFetch("/api/update/question-data", {
+      method: "PUT",
+      jsonBody: {
+        questionId,
+        updatedRubric: rubric,
+      },
+    });
+
     onRubricGenerated(JSON.stringify(rubric, null, 2)); // send structured rubric as JSON string
 
     toast({
@@ -197,7 +214,7 @@ export function QuestionRubricForm({ onRubricGenerated }: QuestionRubricFormProp
             </div>
           </div>
 
-          <Button 
+          <Button
             onClick={generateRubric}
             disabled={isGenerating}
             variant="elegant"
@@ -224,28 +241,32 @@ export function QuestionRubricForm({ onRubricGenerated }: QuestionRubricFormProp
         <Card className="shadow-subtle">
           <CardHeader className="bg-gradient-to-r from-background to-success/10">
             <CardTitle className="flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                Generated Rubric
-              </span>
+              <span className="flex items-center gap-2">Generated Rubric</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-  {Array.isArray(rubric?.criteria) && rubric.criteria.reduce((s: number, c: any) => s + (Number(c?.weight) || 0), 0) > 100 && (
-    <div className="mb-3 text-sm text-destructive">Total weight exceeds 100%. Please adjust.</div>
-  )}
-  <RubricEditor rubric={rubric} onChange={setRubric} />
+            {Array.isArray(rubric?.criteria) &&
+              rubric.criteria.reduce((s: number, c: any) => s + (Number(c?.weight) || 0), 0) > 100 && (
+                <div className="mb-3 text-sm text-destructive">
+                  Total weight exceeds 100%. Please adjust.
+                </div>
+              )}
+            <RubricEditor rubric={rubric} onChange={setRubric} />
 
-  <div className="mt-4 flex justify-end">
-    <Button 
-      onClick={acceptRubric}
-      variant="success"
-      disabled={!Array.isArray(rubric?.criteria) || rubric.criteria.length === 0 || rubric.criteria.reduce((s: number, c: any) => s + (Number(c?.weight) || 0), 0) > 100}
-    >
-      Accept Rubric
-    </Button>
-  </div>
-</CardContent>
-
+            <div className="mt-4 flex justify-end">
+              <Button
+                onClick={acceptRubric}
+                variant="success"
+                disabled={
+                  !Array.isArray(rubric?.criteria) ||
+                  rubric.criteria.length === 0 ||
+                  rubric.criteria.reduce((s: number, c: any) => s + (Number(c?.weight) || 0), 0) > 100
+                }
+              >
+                Accept Rubric
+              </Button>
+            </div>
+          </CardContent>
         </Card>
       )}
     </div>
