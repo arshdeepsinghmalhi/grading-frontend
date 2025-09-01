@@ -14,9 +14,13 @@ export async function apiFetch<T = any>(path: string, options: ApiFetchOptions =
 
   const init: RequestInit = { 
     ...rest,
-    credentials: credentials as RequestCredentials
+    credentials: credentials as RequestCredentials,
+    mode: 'cors'
   };
-  const finalHeaders = new Headers(headers || {});
+  const finalHeaders = new Headers({
+    'Accept': 'application/json',
+    ...headers
+  });
 
   if (jsonBody !== undefined) {
     if (!finalHeaders.has("Content-Type")) {

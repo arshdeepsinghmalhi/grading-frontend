@@ -46,16 +46,13 @@ export function QuestionRubricForm({
   const programs = ["MBA", "BBA", "BCA", "MCA"];
 
   const subjects = [
-    "Data Structures",
-    "Algorithms",
-    "Software Engineering",
-    "Database Systems",
-    "Machine Learning",
-    "Web Development",
-    "Operating Systems",
-    "Computer Networks",
-    "Calculus",
-    "Linear Algebra",
+    "Organisational Behaviour",
+    'Business Statistics',
+    "Placement_Digital Skills",
+    "Financial Analytics",
+    "Financial Products",
+    "Software Project Management"
+
   ];
 
   const years = ["1st year", "2nd year", "3rd year", "4th year"];

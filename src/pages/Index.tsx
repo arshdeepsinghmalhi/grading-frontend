@@ -2,11 +2,19 @@ import { useState } from "react";
 import { QuestionRubricForm } from "@/components/grading/QuestionRubricForm";
 import { UploadGradeForm } from "@/components/grading/UploadGradeForm";
 import { Button } from "@/components/ui/button";
-import { Brain, ArrowRight, RotateCcw, GraduationCap, ArrowLeft } from "lucide-react";
+import {
+  Brain,
+  ArrowRight,
+  RotateCcw,
+  GraduationCap,
+  ArrowLeft,
+} from "lucide-react";
 import { UserProfile } from "@/components/auth/UserProfile";
 
 const Index = () => {
-  const [currentStep, setCurrentStep] = useState<"question" | "upload">("question");
+  const [currentStep, setCurrentStep] = useState<"question" | "upload">(
+    "question"
+  );
   const [rubricText, setRubricText] = useState("");
 
   // 🔼 Lifted state for the QuestionRubricForm
@@ -57,7 +65,8 @@ const Index = () => {
               </h1>
             </div>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Streamline your grading process with AI-powered rubric generation and intelligent assessment feedback
+              Streamline your grading process with AI-powered rubric generation
+              and intelligent assessment feedback
             </p>
           </div>
           <div className="flex-1 flex justify-end">
@@ -86,7 +95,7 @@ const Index = () => {
           <UploadGradeForm
             rubricText={rubricText}
             onGradeComplete={handleGradeComplete}
-            questionId = {questionId}
+            questionId={questionId}
             questionText={questionText}
           />
         )}
