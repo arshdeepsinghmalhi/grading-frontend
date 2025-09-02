@@ -7,7 +7,6 @@ import { useToast } from "@/hooks/use-toast";
 import { apiFetch } from "@/lib/api";
 import { RubricEditor } from "./RubricEditor";
 import { useState } from "react";
-import { Camera } from "lucide-react";
 
 interface QuestionRubricFormProps {
   onRubricGenerated: (rubricText: string) => void;
@@ -42,28 +41,7 @@ export function QuestionRubricForm({
 }: QuestionRubricFormProps) {
   const [isRubricLocked, setIsRubricLocked] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean>(false);
   const { toast } = useToast();
-
-  const requestCameraPermission = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      setHasCameraPermission(true);
-      // Stop the stream since we just wanted to check permission
-      stream.getTracks().forEach(track => track.stop());
-      toast({
-        title: "Camera Access Granted",
-        description: "You can now use the camera to capture questions.",
-      });
-    } catch (err) {
-      setHasCameraPermission(false);
-      toast({
-        title: "Camera Access Denied",
-        description: "Please enable camera access in your browser settings to use this feature.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const programs = ["MBA", "BBA", "BCA", "MCA"];
 
@@ -165,17 +143,6 @@ export function QuestionRubricForm({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 p-6">
-          <div className="flex justify-between items-center mb-4">
-            <Button
-              onClick={requestCameraPermission}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <Camera className="h-4 w-4" />
-              {hasCameraPermission ? "Camera Access Granted" : "Enable Camera Access"}
-            </Button>
-          </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">
               Question Text <span className="text-destructive">*</span>

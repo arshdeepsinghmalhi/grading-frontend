@@ -10,6 +10,8 @@ import {
   Edit3,
   Lock,
   CheckCircle,
+  Camera,
+  Image as ImageIcon,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { API_BASE_URL } from "@/lib/api";
@@ -47,32 +49,54 @@ export function UploadGradeForm({
   const { toast } = useToast();
 
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: "environment" } },
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+      // Try to use the back camera on mobile devices first
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { 
+            facingMode: { exact: "environment" },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          }
+        });
+        streamRef.current = stream;
+      } catch {
+        // If back camera fails, fall back to any available camera
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { 
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          }
+        });
+        streamRef.current = stream;
+      }
+
+      if (videoRef.current && streamRef.current) {
+        videoRef.current.srcObject = streamRef.current;
         await videoRef.current.play();
+        setHasCameraPermission(true);
       }
     } catch (err) {
+      console.error('Camera error:', err);
       toast({
         title: "Camera Error",
-        description: "Unable to access camera.",
+        description: "Unable to access camera. Please check your permissions.",
         variant: "destructive",
       });
       setIsCameraOpen(false);
+      setHasCameraPermission(false);
     }
   };
 
   const stopCamera = () => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
     if (videoRef.current) {
@@ -262,41 +286,72 @@ export function UploadGradeForm({
               )}
             </div>
             <div className="flex items-center gap-3">
-              <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
+              <Dialog open={isCameraOpen} onOpenChange={(open) => {
+                setIsCameraOpen(open);
+                if (!open) stopCamera();
+              }}>
                 <DialogTrigger asChild>
                   <Button
                     type="button"
                     variant="outline"
                     disabled={isSubmitted}
+                    className="flex items-center gap-2"
+                    onClick={async () => {
+                      if (!hasCameraPermission) {
+                        try {
+                          await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                          setHasCameraPermission(true);
+                        } catch (err) {
+                          toast({
+                            title: "Camera Permission Required",
+                            description: "Please allow camera access to use this feature.",
+                            variant: "destructive"
+                          });
+                          return;
+                        }
+                      }
+                    }}
                   >
-                    Use Camera
+                    <Camera className="h-4 w-4" />
+                    Capture Photo
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[600px]">
                   <DialogHeader>
                     <DialogTitle>Capture Answer Photo</DialogTitle>
                     <DialogDescription>
-                      Align the answer in the frame and capture a clear image.
+                      Position the answer sheet in the frame and ensure good lighting for a clear image.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-3">
-                    <div className="aspect-video w-full bg-black rounded overflow-hidden">
+                    <div className="aspect-video w-full bg-black rounded overflow-hidden relative">
                       <video
                         ref={videoRef}
                         className="w-full h-full object-contain"
                         playsInline
+                        autoPlay
                         muted
                       />
+                      <canvas ref={canvasRef} className="hidden" />
                     </div>
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-between gap-2">
                       <Button
                         type="button"
-                        variant="outline"
-                        onClick={() => setIsCameraOpen(false)}
+                        variant="secondary"
+                        onClick={() => {
+                          setIsCameraOpen(false);
+                          stopCamera();
+                        }}
                       >
                         Cancel
                       </Button>
-                      <Button type="button" onClick={capturePhoto}>
+                      <Button
+                        type="button"
+                        variant="default"
+                        className="flex items-center gap-2"
+                        onClick={capturePhoto}
+                      >
+                        <ImageIcon className="h-4 w-4" />
                         Capture
                       </Button>
                     </div>
