@@ -51,7 +51,8 @@ export function QuestionRubricForm({
     "Placement_Digital Skills",
     "Financial Analytics",
     "Financial Products",
-    "Software Project Management"
+    "Software Project Management",
+    "Business Law"
 
   ];
 
