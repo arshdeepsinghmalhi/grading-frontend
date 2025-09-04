@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { FeedbackViewer } from "./FeedbackEditor";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import {
   Upload,
   FileText,
@@ -54,25 +55,33 @@ export function UploadGradeForm({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  // Parse feedback into array
+  const parsedFeedback = useMemo(() => {
+    try {
+      return JSON.parse(feedback);
+    } catch {
+      return [];
+    }
+  }, [feedback]);
+
+  const handleFeedbackChange = (updated: any[]) => {
+    setFeedback(JSON.stringify(updated, null, 2));
+  };
+
   const startCamera = async () => {
     try {
-      // Try to use the back camera on mobile devices first
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { 
+          video: {
             facingMode: { exact: "environment" },
             width: { ideal: 1920 },
-            height: { ideal: 1080 }
-          }
+            height: { ideal: 1080 },
+          },
         });
         streamRef.current = stream;
       } catch {
-        // If back camera fails, fall back to any available camera
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { 
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
-          }
+          video: { width: { ideal: 1920 }, height: { ideal: 1080 } },
         });
         streamRef.current = stream;
       }
@@ -83,7 +92,7 @@ export function UploadGradeForm({
         setHasCameraPermission(true);
       }
     } catch (err) {
-      console.error('Camera error:', err);
+      console.error("Camera error:", err);
       toast({
         title: "Camera Error",
         description: "Unable to access camera. Please check your permissions.",
@@ -96,7 +105,7 @@ export function UploadGradeForm({
 
   const stopCamera = () => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
     if (videoRef.current) {
@@ -184,10 +193,11 @@ export function UploadGradeForm({
 
       const { data } = await response.json();
 
-      // Adjust based on actual backend response shape
       setGradeId(data.gradeId);
       setScore(data.total_score?.toString() ?? "N/A");
-      setFeedback(data.feedback ?? "No feedback received.");
+      setFeedback(
+        JSON.stringify(data.criteria_wise_result) ?? "No feedback received."
+      );
       setHasResults(true);
       setIsResultsLocked(true);
 
@@ -258,6 +268,7 @@ export function UploadGradeForm({
 
   return (
     <div className="space-y-6">
+      {/* Upload & Grade Card */}
       <Card className="shadow-subtle">
         <CardHeader className="bg-gradient-to-r from-background to-accent/10">
           <CardTitle className="flex items-center gap-2">
@@ -285,11 +296,16 @@ export function UploadGradeForm({
                 </div>
               )}
             </div>
+
+            {/* Camera Capture */}
             <div className="flex items-center gap-3">
-              <Dialog open={isCameraOpen} onOpenChange={(open) => {
-                setIsCameraOpen(open);
-                if (!open) stopCamera();
-              }}>
+              <Dialog
+                open={isCameraOpen}
+                onOpenChange={(open) => {
+                  setIsCameraOpen(open);
+                  if (!open) stopCamera();
+                }}
+              >
                 <DialogTrigger asChild>
                   <Button
                     type="button"
@@ -299,13 +315,16 @@ export function UploadGradeForm({
                     onClick={async () => {
                       if (!hasCameraPermission) {
                         try {
-                          await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                          await navigator.mediaDevices.getUserMedia({
+                            video: { facingMode: "environment" },
+                          });
                           setHasCameraPermission(true);
                         } catch (err) {
                           toast({
                             title: "Camera Permission Required",
-                            description: "Please allow camera access to use this feature.",
-                            variant: "destructive"
+                            description:
+                              "Please allow camera access to use this feature.",
+                            variant: "destructive",
                           });
                           return;
                         }
@@ -320,7 +339,8 @@ export function UploadGradeForm({
                   <DialogHeader>
                     <DialogTitle>Capture Answer Photo</DialogTitle>
                     <DialogDescription>
-                      Position the answer sheet in the frame and ensure good lighting for a clear image.
+                      Position the answer sheet in the frame and ensure good
+                      lighting for a clear image.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-3">
@@ -383,6 +403,7 @@ export function UploadGradeForm({
         </CardContent>
       </Card>
 
+      {/* Grading Results */}
       {hasResults && (
         <Card className="shadow-subtle">
           <CardHeader className="bg-gradient-to-r from-background to-warning/10">
@@ -403,6 +424,7 @@ export function UploadGradeForm({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 p-6">
+            {/* Score */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">
                 Score
@@ -416,18 +438,19 @@ export function UploadGradeForm({
               />
             </div>
 
+            {/* Feedback */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">
                 Feedback
               </label>
-              <Textarea
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-                disabled={isResultsLocked}
-                className="min-h-[200px] resize-none font-mono text-sm"
+              <FeedbackViewer
+                feedback={parsedFeedback}
+                onChange={handleFeedbackChange}
+                isLocked={isResultsLocked}
               />
             </div>
 
+            {/* Submit / Success */}
             {!isSubmitted && (
               <div className="flex justify-end pt-4 border-t">
                 <Button
