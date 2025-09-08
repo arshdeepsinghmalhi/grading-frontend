@@ -39,6 +39,7 @@ export function UploadGradeForm({
   questionText,
 }: UploadGradeFormProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [userId, setUserId] = useState("");
   const [gradingInstructions, setGradingInstructions] = useState("");
   const [gradeId, setGradeId] = useState("");
   const [score, setScore] = useState("");
@@ -164,6 +165,15 @@ export function UploadGradeForm({
       return;
     }
 
+    if (!userId) {
+      toast({
+        title: "Student ID Required",
+        description: "Please enter a student ID.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!rubricText) {
       toast({
         title: "Rubric Required",
@@ -182,6 +192,7 @@ export function UploadGradeForm({
       formData.append("file", selectedFile);
       formData.append("questionId", questionId);
       formData.append("questionText", questionText);
+      formData.append("userId", userId);
       const response = await fetch(`${API_BASE_URL}/api/grade`, {
         method: "POST",
         body: formData,
@@ -295,6 +306,19 @@ export function UploadGradeForm({
                   {selectedFile.name}
                 </div>
               )}
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Student ID <span className="text-destructive">*</span>
+              </label>
+              <Input
+                type="text"
+                value={userId}
+                onChange={(e) => setUserId(e.target.value)}
+                placeholder="Enter student ID"
+                className="max-w-xs"
+                disabled={isSubmitted}
+              />
             </div>
 
             {/* Camera Capture */}

@@ -43,18 +43,9 @@ export function QuestionRubricForm({
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
-  const programs = ["MBA", "BBA", "BCA", "MCA"];
+  const programs = ["MBA", "BBA", "BCA", "MCA", "BTECH"];
 
-  const subjects = [
-    "Organisational Behaviour",
-    'Business Statistics',
-    "Placement_Digital Skills",
-    "Financial Analytics",
-    "Financial Products",
-    "Software Project Management",
-    "Business Law"
-
-  ];
+  // Subject is now a free text input
 
   const years = ["1st year", "2nd year", "3rd year", "4th year"];
 
@@ -179,18 +170,13 @@ export function QuestionRubricForm({
               <label className="text-sm font-medium text-foreground">
                 Subject <span className="text-destructive">*</span>
               </label>
-              <Select value={subject} onValueChange={setSubject}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select subject" />
-                </SelectTrigger>
-                <SelectContent>
-                  {subjects.map((subj) => (
-                    <SelectItem key={subj} value={subj}>
-                      {subj}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <input
+                type="text"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                placeholder="Enter subject"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
             </div>
 
             <div className="space-y-2 md:col-span-2">
