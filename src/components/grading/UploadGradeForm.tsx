@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FeedbackViewer } from "./FeedbackEditor";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
 
 import {
   Upload,
@@ -49,6 +50,7 @@ export function UploadGradeForm({
   const [hasResults, setHasResults] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState(false);
@@ -193,6 +195,7 @@ export function UploadGradeForm({
       formData.append("questionId", questionId);
       formData.append("questionText", questionText);
       formData.append("userId", userId);
+      formData.append("userEmail", user?.email || "");
       const response = await fetch(`${API_BASE_URL}/api/grade`, {
         method: "POST",
         body: formData,
@@ -248,6 +251,7 @@ export function UploadGradeForm({
         body: JSON.stringify({
           gradeId: gradeId,
           updatedScore: score,
+          userEmail: user?.email || "",
           updatedFeedback: feedback,
         }),
       });

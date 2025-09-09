@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiFetch } from "@/lib/api";
 import { RubricEditor } from "./RubricEditor";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface QuestionRubricFormProps {
   onRubricGenerated: (rubricText: string) => void;
@@ -42,6 +43,7 @@ export function QuestionRubricForm({
   const [isRubricLocked, setIsRubricLocked] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const programs = ["MBA", "BBA", "BCA", "MCA", "BTECH"];
 
@@ -71,6 +73,7 @@ export function QuestionRubricForm({
             ...(program ? { program } : {}),
             ...(subject ? { subject } : {}),
             ...(year ? { year } : {}),
+            userEmail: user?.email || "",
           },
         }
       );
@@ -113,6 +116,7 @@ export function QuestionRubricForm({
       jsonBody: {
         questionId,
         updatedRubric: rubric,
+        userEmail: user?.email || "",
       },
     });
 
